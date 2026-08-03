@@ -286,8 +286,8 @@
             const isFinished = job.status === 'finished';
 
             const photoCell = job.photo
-                ? `<a class="photo-link" href="${job.photo}" target="_blank" rel="noopener">ፎቶ ይመልከቱ</a>`
-                : '<small>የለም</small>';
+    ? `<a class="photo-link" href="https://zero01-s6oc.onrender.com${job.photo}" target="_blank" rel="noopener">ፎቶ ይመልከቱ</a>`
+    : `<small>ፎቶ የለም</small>`;
 
             tr.innerHTML = `
                 <td><strong>${escapeHtml(job.year || '2018')}</strong></td>
