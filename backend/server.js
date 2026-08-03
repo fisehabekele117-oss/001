@@ -1,13 +1,14 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const multer = require('multer');
 
 const app = express();
+app.use(cors());
 const PORT = process.env.PORT || 3000;
-
 const DATA_DIR = path.join(__dirname, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'jobs.json');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
