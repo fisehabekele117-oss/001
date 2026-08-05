@@ -320,7 +320,7 @@
     async function toggleJobStatus(jobId, btn) {
         btn.disabled = true;
         try {
-            const res = await fetch(`/api/workers/${jobId}`, { method: 'PATCH' });
+            const res = await fetch(`https://zero01-s6oc.onrender.com/api/workers/${jobId}`, { method: 'PATCH' });
             if (!res.ok) throw new Error('Update failed');
             const updatedJob = await res.json();
 
