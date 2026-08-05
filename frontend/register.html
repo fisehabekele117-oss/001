@@ -17,6 +17,7 @@
         const daySelect = document.getElementById('day');
 
         function populateDays(maxDays) {
+            if (!daySelect) return;
             const previousValue = daySelect.value;
             daySelect.innerHTML = '<option value="" disabled selected>ቀን</option>';
             for (let d = 1; d <= maxDays; d++) {
@@ -30,27 +31,27 @@
             }
         }
 
-        // ጳጉሜ 6 ቀናት ብቻ አሉት (በአንዳንድ ዓመታት 5)፣ የተቀሩት ወራት 30 ቀናት አላቸው
         if (monthSelect) {
             monthSelect.addEventListener('change', function () {
                 populateDays(monthSelect.value === 'ጳጉሜ' ? 6 : 30);
             });
+            populateDays(30);
         }
-
-        populateDays(30);
 
         if (yearSelect) {
             yearSelect.addEventListener('change', checkYearSelection);
         }
 
         function checkYearSelection() {
-            if (yearSelect.value === 'other') {
-                customYearGroup.style.display = 'block';
-                customYearInput.required = true;
+            if (yearSelect && yearSelect.value === 'other') {
+                if (customYearGroup) customYearGroup.style.display = 'block';
+                if (customYearInput) customYearInput.required = true;
             } else {
-                customYearGroup.style.display = 'none';
-                customYearInput.required = false;
-                customYearInput.value = '';
+                if (customYearGroup) customYearGroup.style.display = 'none';
+                if (customYearInput) {
+                    customYearInput.required = false;
+                    customYearInput.value = '';
+                }
             }
         }
 
