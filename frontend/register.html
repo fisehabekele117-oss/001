@@ -391,18 +391,19 @@
             const photoInput = document.getElementById('photo');
             const fd = new FormData();
             fd.append('year', finalYear);
-            fd.append('month', monthSelect.value);
-            fd.append('day', daySelect.value);
-            fd.append('employerName', document.getElementById('employerName').value);
-            fd.append('jobTitle', document.getElementById('jobTitle').value);
-            fd.append('quantity', document.getElementById('quantity').value);
-            fd.append('location', document.getElementById('location').value);
-            fd.append('contactPersonName', document.getElementById('contactPersonName').value);
-            fd.append('contactPersonPhone', document.getElementById('contactPersonPhone').value);
-            fd.append('description', document.getElementById('description').value);
-            if (photoInput.files[0]) {
-                fd.append('photo', photoInput.files[0]);
-            }
+fd.append('month', monthSelect.value);
+fd.append('day', daySelect.value);
+fd.append('employerName', document.getElementById('employerName').value);
+fd.append('jobTitle', document.getElementById('jobTitle').value);
+fd.append('size', document.getElementById('size').value);
+fd.append('quantity', document.getElementById('quantity').value);
+fd.append('location', document.getElementById('location').value);
+fd.append('contactPersonName', document.getElementById('contactPersonName').value);
+fd.append('contactPersonPhone', document.getElementById('contactPersonPhone').value);
+fd.append('description', document.getElementById('description').value);
+if (photoInput.files[0]) {
+    fd.append('photo', photoInput.files[0]);
+}
 
             submitBtn.disabled = true;
             submitBtn.textContent = 'በመላክ ላይ...';
