@@ -1,7 +1,8 @@
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
         // Telegram WebApp Initialization
         let tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-        try { tg.expand(); tg.ready(); } catch (e) { /* running outside Telegram, ignore */ }
+        try { if (tg) { tg.expand(); tg.ready(); } } catch (e) { /* running outside Telegram, ignore */ }
 
         const API_BASE = 'https://zero01-s6oc.onrender.com';
 
@@ -30,11 +31,17 @@
         }
 
         // ጳጉሜ 6 ቀናት ብቻ አሉት (በአንዳንድ ዓመታት 5)፣ የተቀሩት ወራት 30 ቀናት አላቸው
-        monthSelect.addEventListener('change', function () {
-            populateDays(monthSelect.value === 'ጳጉሜ' ? 6 : 30);
-        });
+        if (monthSelect) {
+            monthSelect.addEventListener('change', function () {
+                populateDays(monthSelect.value === 'ጳጉሜ' ? 6 : 30);
+            });
+        }
 
         populateDays(30);
+
+        if (yearSelect) {
+            yearSelect.addEventListener('change', checkYearSelection);
+        }
 
         function checkYearSelection() {
             if (yearSelect.value === 'other') {
@@ -47,67 +54,73 @@
             }
         }
 
-        form.addEventListener('submit', async function (e) {
-            e.preventDefault();
-            errorMsg.style.display = 'none';
-            successMsg.style.display = 'none';
+        if (form) {
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                if (errorMsg) errorMsg.style.display = 'none';
+                if (successMsg) successMsg.style.display = 'none';
 
-            // የዓመተ ምህረት ምርጫን ትክክለኛ ዋጋ መውሰድ ("ሌላ" ከሆነ የፃፈውን መውሰድ)
-            let finalYear = yearSelect.value;
-            if (finalYear === 'other') {
-                finalYear = customYearInput.value;
-            }
-
-            const photoInput = document.getElementById('photo');
-            const fd = new FormData();
-            fd.append('year', finalYear);
-            fd.append('month', monthSelect.value);
-            fd.append('day', daySelect.value);
-            fd.append('employerName', document.getElementById('employerName').value);
-            fd.append('jobTitle', document.getElementById('jobTitle').value);
-            fd.append('quantity', document.getElementById('quantity').value);
-            fd.append('location', document.getElementById('location').value);
-            fd.append('contactPersonName', document.getElementById('contactPersonName').value);
-            fd.append('contactPersonPhone', document.getElementById('contactPersonPhone').value);
-            fd.append('description', document.getElementById('description').value);
-            if (photoInput.files[0]) {
-                fd.append('photo', photoInput.files[0]);
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'በመላክ ላይ...';
-
-            try {
-                const res = await fetch(`${API_BASE}/api/workers`, {
-                    method: 'POST',
-                    body: fd
-                });
-
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.error || 'Request failed');
+                let finalYear = yearSelect ? yearSelect.value : '';
+                if (finalYear === 'other') {
+                    finalYear = customYearInput ? customYearInput.value : '';
                 }
 
-                if (tg && tg.HapticFeedback) {
-                    tg.HapticFeedback.notificationOccurred('success');
+                const photoInput = document.getElementById('photo');
+                const fd = new FormData();
+                fd.append('year', finalYear);
+                fd.append('month', monthSelect ? monthSelect.value : '');
+                fd.append('day', daySelect ? daySelect.value : '');
+                fd.append('employerName', document.getElementById('employerName').value);
+                fd.append('jobTitle', document.getElementById('jobTitle').value);
+                fd.append('quantity', document.getElementById('quantity').value);
+                fd.append('location', document.getElementById('location').value);
+                fd.append('contactPersonName', document.getElementById('contactPersonName').value);
+                fd.append('contactPersonPhone', document.getElementById('contactPersonPhone').value);
+                fd.append('description', document.getElementById('description').value);
+                if (photoInput && photoInput.files[0]) {
+                    fd.append('photo', photoInput.files[0]);
                 }
 
-                successMsg.style.display = 'block';
-                form.reset();
-                customYearGroup.style.display = 'none';
-            } catch (err) {
-                console.error('Submit error:', err);
-                errorMsg.style.display = 'block';
-                if (tg && tg.HapticFeedback) {
-                    tg.HapticFeedback.notificationOccurred('error');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'በመላክ ላይ...';
                 }
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<span class="material-icons-round" style="vertical-align:middle;font-size:20px;">send</span> መረጃውን መዝግብ';
-                setTimeout(() => {
-                    successMsg.style.display = 'none';
-                    errorMsg.style.display = 'none';
-                }, 3000);
-            }
-        });
-    </script>
+
+                try {
+                    const res = await fetch(`${API_BASE}/api/workers`, {
+                        method: 'POST',
+                        body: fd
+                    });
+
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData.error || 'Request failed');
+                    }
+
+                    if (tg && tg.HapticFeedback) {
+                        tg.HapticFeedback.notificationOccurred('success');
+                    }
+
+                    if (successMsg) successMsg.style.display = 'block';
+                    form.reset();
+                    if (customYearGroup) customYearGroup.style.display = 'none';
+                } catch (err) {
+                    console.error('Submit error:', err);
+                    if (errorMsg) errorMsg.style.display = 'block';
+                    if (tg && tg.HapticFeedback) {
+                        tg.HapticFeedback.notificationOccurred('error');
+                    }
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<span class="material-icons-round" style="vertical-align:middle;font-size:20px;">send</span> መረጃውን መዝግብ';
+                    }
+                    setTimeout(() => {
+                        if (successMsg) successMsg.style.display = 'none';
+                        if (errorMsg) errorMsg.style.display = 'none';
+                    }, 3000);
+                }
+            });
+        }
+    });
+</script>
