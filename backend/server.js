@@ -10,9 +10,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // --- CORS: allow the frontend (e.g. your Vercel site) to call this API ---
-// Set ALLOWED_ORIGINS in your .env as a comma-separated list, e.g.:
-// ALLOWED_ORIGINS=https://fisehabekele.vercel.app,http://localhost:3000
-// If ALLOWED_ORIGINS is not set, all origins are allowed (fine for testing).
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map(o => o.trim())
@@ -82,7 +79,8 @@ app.get('/api/workers', (req, res) => {
 // POST create a new job (multipart/form-data, supports optional "photo")
 app.post('/api/workers', upload.single('photo'), (req, res) => {
   try {
-    const { year, month, day, employerName, jobTitle, quantity, location, contactPersonName, contactPersonPhone, description } = req.body;
+    // 1. size ን ከ req.body ውስጥ መቀበል
+    const { year, month, day, employerName, jobTitle, size, quantity, location, contactPersonName, contactPersonPhone, description } = req.body;
 
     if (!year || !employerName || !jobTitle || !quantity) {
       return res.status(400).json({ error: 'year, employerName, jobTitle እና quantity ያስፈልጋሉ' });
@@ -96,6 +94,7 @@ app.post('/api/workers', upload.single('photo'), (req, res) => {
       day: day ? String(day) : '',
       employerName: String(employerName),
       jobTitle: String(jobTitle),
+      size: size ? String(size) : '-', // 2. size ን ወደ ጆንሰን መዝገብ መጨመር (ካልተሞላ '-' ያደርገዋል)
       quantity: String(quantity),
       location: location || '',
       contactPersonName: contactPersonName || '',
