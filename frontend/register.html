@@ -405,10 +405,10 @@
             submitBtn.textContent = 'በመላክ ላይ...';
 
             try {
-                const res = await fetch('/api/workers', {
-                    method: 'POST',
-                    body: fd
-                });
+                const res = await fetch('https://zero01-s6oc.onrender.com/api/workers', {
+    method: 'POST',
+    body: fd
+});
 
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
