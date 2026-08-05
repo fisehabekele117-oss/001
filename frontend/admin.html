@@ -254,7 +254,7 @@
         const tbody = document.getElementById('jobTableBody');
         tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">መረጃዎችን በመጫን ላይ...</td></tr>';
 
-        fetch('/api/workers')
+        fetch('https://zero01-s6oc.onrender.com/api/workers')
             .then(response => {
                 if (!response.ok) throw new Error('Network response was not ok');
                 return response.json();
