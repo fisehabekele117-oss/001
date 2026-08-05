@@ -1,140 +1,58 @@
-require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs');
-const crypto = require('crypto');
-const multer = require('multer');
 
 const app = express();
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
-const PORT = process.env.PORT || 3000;
-const DATA_DIR = path.join(__dirname, 'data');
-const DATA_FILE = path.join(DATA_DIR, 'jobs.json');
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
-const FRONTEND_DIR = path.join(__dirname, '..', 'frontend');
-
-// --- Ensure storage exists ---
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, '[]');
-if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-
-// --- Simple JSON "database" helpers ---
-function readJobs() {
-  try {
-    return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
-  } catch (e) {
-    console.error('Failed to read jobs.json, resetting to empty list:', e);
-    return [];
-  }
-}
-
-function writeJobs(jobs) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(jobs, null, 2));
-}
-
-// --- File upload (photo) config ---
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname || '').slice(0, 10);
-    cb(null, `${Date.now()}-${crypto.randomUUID()}${ext}`);
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('Only image files are allowed'));
-  }
-});
-
 app.use(express.json());
-app.use('/uploads', express.static(UPLOADS_DIR));
-app.use(express.static(FRONTEND_DIR));
+app.use(cors());
 
-// --- Routes for the two pages (nice URLs for the Telegram bot buttons) ---
-app.get('/register', (req, res) => res.sendFile(path.join(FRONTEND_DIR, 'register.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(FRONTEND_DIR, 'admin.html')));
+// 1. MongoDB Connection String
+const MONGO_URI = 'mongodb+srv://fisehabekele117_db_user:dCEgHclKmbHAbTym@cluster0.bmcont5.mongodb.net/?appName=Cluster0';
 
-// --- REST API ---
+mongoose.connect(MONGO_URI)
+  .then(() => console.log('Connected to MongoDB Atlas successfully!'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
-// GET all jobs
-app.get('/api/workers', (req, res) => {
-  res.json(readJobs());
+// 2. Define Job Schema & Model
+const jobSchema = new mongoose.Schema({
+  employer: String,
+  jobTitle: String,
+  location: String,
+  photo: String,
+  date: { type: Date, default: Date.now }
 });
 
-// POST create a new job (multipart/form-data, supports optional "photo")
-app.post('/api/workers', upload.single('photo'), (req, res) => {
+const Job = mongoose.model('Job', jobSchema);
+
+// 3. API Routes
+
+// Get all jobs
+app.get('/api/jobs', async (req, res) => {
   try {
-    const { year, employerName, jobTitle, quantity, location, contactPersonName, contactPersonPhone, description } = req.body;
-
-    if (!year || !employerName || !jobTitle || !quantity) {
-      return res.status(400).json({ error: 'year, employerName, jobTitle እና quantity ያስፈልጋሉ' });
-    }
-
-    const jobs = readJobs();
-    const newJob = {
-      id: crypto.randomUUID(),
-      year: String(year),
-      employerName: String(employerName),
-      jobTitle: String(jobTitle),
-      quantity: String(quantity),
-      location: location || '',
-      contactPersonName: contactPersonName || '',
-      contactPersonPhone: contactPersonPhone || '',
-      description: description || '',
-      photo: req.file ? `/uploads/${req.file.filename}` : null,
-      status: 'active',
-      createdAt: new Date().toISOString()
-    };
-
-    jobs.push(newJob);
-    writeJobs(jobs);
-
-    res.status(201).json(newJob);
+    const jobs = await Job.find().sort({ _id: -1 });
+    res.json(jobs);
   } catch (err) {
-    console.error('POST /api/workers error:', err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Failed to fetch jobs' });
   }
 });
 
-// PATCH toggle status (active <-> finished)
-app.patch('/api/workers/:id', (req, res) => {
-  const jobs = readJobs();
-  const job = jobs.find(j => j.id === req.params.id);
-  if (!job) return res.status(404).json({ error: 'Job not found' });
-
-  job.status = job.status === 'active' ? 'finished' : 'active';
-  writeJobs(jobs);
-  res.json(job);
+// Add a new job
+app.post('/api/jobs', async (req, res) => {
+  try {
+    const { employer, jobTitle, location, photo } = req.body;
+    const newJob = new Job({ employer, jobTitle, location, photo });
+    await newJob.save();
+    res.status(201).json({ message: 'Job saved successfully!', job: newJob });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save job' });
+  }
 });
 
-// DELETE a job
-app.delete('/api/workers/:id', (req, res) => {
-  const jobs = readJobs();
-  const exists = jobs.some(j => j.id === req.params.id);
-  if (!exists) return res.status(404).json({ error: 'Job not found' });
+// Serve static files if needed
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-  writeJobs(jobs.filter(j => j.id !== req.params.id));
-  res.json({ success: true });
-});
-
-// Multer / general error handler
-app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(400).json({ error: err.message || 'Unexpected error' });
-});
-
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
-
-// --- Optional: start the Telegram bot (only if a token is configured) ---
-require('./bot');
