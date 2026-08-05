@@ -1,6 +1,6 @@
 <script>
         // Telegram WebApp Initialization
-        let tg = window.Telegram.WebApp;
+        let tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
         try { tg.expand(); tg.ready(); } catch (e) { /* running outside Telegram, ignore */ }
 
         const API_BASE = 'https://zero01-s6oc.onrender.com';
