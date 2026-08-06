@@ -5,7 +5,7 @@ const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
 const mongoose = require('mongoose');
-const fs = require('fs'); // <--- ይህ ተጨምሯል
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -62,14 +62,15 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('Only image files are allowed'));
+    else cb(new Error('እባክዎ ትክክለኛ የፎቶ ፋይል ብቻ ይምረጡ'));
   }
 });
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Body parser limit increased
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use(express.static(FRONTEND_DIR));
 
@@ -81,7 +82,6 @@ app.get('/admin', (req, res) => res.sendFile(path.join(FRONTEND_DIR, 'admin.html
 app.get('/api/workers', async (req, res) => {
   try {
     const workers = await Worker.find().sort({ createdAt: -1 });
-    // Convert _id to id for frontend compatibility
     const formatted = workers.map(w => ({
       id: w.id || w._id.toString(),
       year: w.year,
@@ -197,8 +197,12 @@ app.delete('/api/workers/:id', async (req, res) => {
   }
 });
 
+// Global Error Handler (Multer file size errors catch here)
 app.use((err, req, res, next) => {
   console.error(err);
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ error: 'የተመረጠው ፎቶ መጠን ከ 5MB መብለጥ የለበትም!' });
+  }
   res.status(400).json({ error: err.message || 'Unexpected error' });
 });
 
