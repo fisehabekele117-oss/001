@@ -5,6 +5,7 @@ const path = require('path');
 const crypto = require('crypto');
 const multer = require('multer');
 const mongoose = require('mongoose');
+const fs = require('fs'); // <--- ይህ ተጨምሯል
 
 const app = express();
 const PORT = process.env.PORT || 3000;
